@@ -1,0 +1,197 @@
+FROM osrf/ros:humble-desktop-full
+############################## SYSTEM PARAMETERS ##############################
+# * Arguments
+ARG USER=initial
+ARG GROUP=initial
+ARG UID=1000
+ARG GID="${UID}"
+ARG SHELL=/bin/bash
+ARG HARDWARE=x86_64
+ARG ENTRYPOINT_FILE=entrypint.sh
+
+# * Env vars for the nvidia-container-runtime.
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES all
+# ENV NVIDIA_DRIVER_CAPABILITIES graphics,utility,compute
+
+# * Setup users and groups
+RUN groupadd --gid "${GID}" "${GROUP}" \
+    && useradd --gid "${GID}" --uid "${UID}" -ms "${SHELL}" "${USER}" \
+    && mkdir -p /etc/sudoers.d \
+    && echo "${USER}:x:${UID}:${UID}:${USER},,,:/home/${USER}:${SHELL}" >> /etc/passwd \
+    && echo "${USER}:x:${UID}:" >> /etc/group \
+    && echo "${USER} ALL=(ALL) NOPASSWD: ALL" > "/etc/sudoers.d/${USER}" \
+    && chmod 0440 "/etc/sudoers.d/${USER}"
+
+# * Replace apt urls
+# ? Change to tku
+RUN sed -i 's@archive.ubuntu.com@ftp.tku.edu.tw@g' /etc/apt/sources.list
+# ? Change to Taiwan
+# RUN sed -i 's@archive.ubuntu.com@tw.archive.ubuntu.com@g' /etc/apt/sources.list
+
+# * Time zone
+ENV TZ=Asia/Taipei
+RUN ln -snf /usr/share/zoneinfo/"${TZ}" /etc/localtime && echo "${TZ}" > /etc/timezone
+
+# * Copy custom configuration
+# ? Requires docker version >= 17.09
+COPY --chmod=0775 ./${ENTRYPOINT_FILE} /entrypoint.sh
+COPY --chown="${USER}":"${GROUP}" --chmod=0775 config config
+# ? docker version < 17.09
+# COPY ./${ENTRYPOINT_FILE} /entrypoint.sh
+# COPY config config
+# RUN sudo chmod 0775 /entrypoint.sh && \
+    # sudo chown -R "${USER}":"${GROUP}" config \
+    # && sudo chmod -R 0775 config
+
+############################### INSTALL #######################################
+# * Install packages
+RUN apt update \
+    && apt install -y --no-install-recommends \
+        sudo \
+        git \
+        htop \
+        wget \
+        curl \
+        psmisc \
+        # * Shell
+        tmux \
+        terminator \
+        # * base tools
+        udev \
+        libtool \
+        python3-pip \
+        python3-dev \
+        python3-setuptools \
+        python3-colcon-common-extensions \
+        software-properties-common \
+        lsb-release \
+        ros-humble-rmw-cyclonedds-cpp \
+        # * Work tools
+    && apt clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# gnome-terminal libcanberra-gtk-module libcanberra-gtk3-module \
+# dbus-x11 libglvnd0 libgl1 libglx0 libegl1 libxext6 libx11-6 \
+# display dep
+# libnss3 libgbm1 libxshmfence1 libdrm2 libx11-xcb1 libxcb-*-dev
+
+# ENV DEBIAN_FRONTEND=noninteractive
+# RUN sudo add-apt-repository universe
+# RUN sudo apt update
+# RUN sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key  -o /usr/share/keyrings/ros-archive-keyring.gpg
+# # RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null
+# RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+# RUN sudo apt update
+# # RUN sudo  apt install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" keyboard-configuration
+# RUN sudo DEBIAN_FRONTEND=noninteractive apt install -y ros-galactic-desktop
+# #ROS2 Cyclone DDS
+# RUN sudo apt install -y ros-humble-rmw-cyclonedds-cpp
+# #colcon depend
+# RUN sudo apt install -y python3-colcon-common-extensions
+
+
+
+
+RUN ./config/pip/pip_setup.sh
+
+
+# RUN sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE
+# RUN sudo add-apt-repository "deb https://librealsense.intel.com/Debian/apt-repo $(lsb_release -cs) main" -u
+RUN rm -rf /etc/apt/source.list.d/ros2.list
+RUN export ROS_APT_SOURCE_VERSION=$(curl -s https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest | grep -F "tag_name" | awk -F\" '{print $4}') && \
+    curl -L -o /tmp/ros2-apt-source.deb "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(lsb_release -c | awk '{print $2}')_all.deb" && \
+    dpkg -i /tmp/ros2-apt-source.deb && \
+    rm /tmp/ros2-apt-source.deb
+RUN apt update && apt install -y --no-install-recommends \
+#   #Realsense SDK depend
+    #librealsense2-dkms \
+    #librealsense2-utils \
+    #librealsense2-dev \
+    #librealsense2-dbg \
+    # ros-humble-librealsense2* \
+    ros-humble-diagnostic-updater \
+    ros-humble-moveit \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists 
+
+RUN apt update && apt install -y --no-install-recommends \
+    ros-humble-nav2* \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists 
+
+#   #OMPL depend
+RUN apt update && apt install -y --no-install-recommends \
+    lsb-release \
+    g++ \
+    cmake \
+    pkg-config \
+    libboost-serialization-dev \
+    libboost-filesystem-dev \
+    libboost-system-dev \
+    libboost-program-options-dev \
+    libboost-test-dev \
+    libeigen3-dev \
+    libode-dev wget \
+    libyaml-cpp-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists 
+
+RUN sudo pip3 install -vU https://github.com/CastXML/pygccxml/archive/develop.zip pyplusplus
+
+RUN apt update && apt install -y --no-install-recommends \
+    castxml \
+    libboost-python-dev \
+    libboost-numpy-dev \
+    python3-numpy \
+    pypy3 \
+    python3-pyqt5.qtopengl \
+    freeglut3-dev \
+    libassimp-dev \
+    python3-opengl \
+    python3-flask \
+    python3-celery \
+    libccd-dev \
+    libfcl-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists 
+
+RUN sudo pip3 install -vU PyOpenGL-accelerate
+
+###install realsense SDK
+RUN git clone https://github.com/realsenseai/librealsense.git && cd librealsense \
+    && mkdir build && cd build && cmake .. && make uninstall && make clean && make && sudo make install
+############################## USER CONFIG ####################################
+# * Switch user to ${USER}
+USER ${USER}
+
+RUN ./config/shell/bash_setup.sh "${USER}" "${GROUP}" \
+    && ./config/shell/terminator/terminator_setup.sh "${USER}" "${GROUP}" \
+    && ./config/shell/tmux/tmux_setup.sh "${USER}" "${GROUP}" \
+    && sudo rm -rf /config
+RUN export CXX=g++
+RUN export MAKEFLAGS="-j nproc"
+RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+RUN echo "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" >> ~/.bashrc
+
+# * Switch workspace to ~/work
+RUN sudo mkdir -p /home/"${USER}"/work
+WORKDIR /home/"${USER}"/work
+#moveit update lacking of lib, manaual install here
+RUN sudo apt update
+RUN sudo apt install -y ros-humble-geometric-shapes
+RUN sudo apt install -y ros-humble-srdfdom
+RUN sudo apt install -y ros-humble-visp
+RUN sudo pip install opencv-python==4.11.0.86
+RUN sudo pip install opencv--contrib-python==4.11.0.86
+RUN sudo pip install numpy==1.26.4
+
+WORKDIR /home/"${USER}"/work
+
+# * Make SSH available
+EXPOSE 22
+
+ENTRYPOINT [ "/entrypoint.sh", "terminator" ]
+# ENTRYPOINT [ "/entrypoint.sh", "tmux" ]
+# ENTRYPOINT [ "/entrypoint.sh", "bash" ]
+# ENTRYPOINT [ "/entrypoint.sh" ]

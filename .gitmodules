@@ -1,0 +1,21 @@
+[submodule "src/dualsense_teleop"]
+	path = src/dualsense_teleop
+	url = https://github.com/zhekai-w/dualsense_teleop.git
+
+[submodule "src/ur5_lerobot_data_collection"]
+	path = src/ur5_lerobot_data_collection
+	url = https://github.com/zhekai-w/ur5_lerobot_data_collection.git
+
+[submodule "src/ros2_robotiq_gripper"]
+	path = src/ros2_robotiq_gripper
+	url = https://github.com/PickNikRobotics/ros2_robotiq_gripper.git
+	branch = humble
+
+[submodule "src/serial"]
+	path = src/serial
+	url = https://github.com/tylerjw/serial.git
+	branch = ros2
+
+[submodule "pkgs/lerobot"]
+	path = pkgs/lerobot
+	url = https://github.com/huggingface/lerobot.git

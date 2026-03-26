@@ -75,6 +75,10 @@ RUN apt update \
     lsb-release \
     libhidapi-dev \
     openssh-server \
+    ffmpeg \
+    libsm6 \
+    libxext6 \ 
+    snapd \
     # * Work tools
     && apt clean \
     && rm -rf /var/lib/apt/lists/*
@@ -101,7 +105,6 @@ RUN apt update && apt install -y --no-install-recommends \
     ros-humble-moveit \
     python3-colcon-common-extensions \
     v4l-utils \
-    ffmpeg \
     ros-humble-ur \
     ros-humble-imu-tools \
     ros-humble-xacro \
@@ -139,7 +142,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 #     && apt clean \
 #     && rm -rf /var/lib/apt/lists/*
 
-#################### Kinect Azure ###############################
+#################### Kinect Azure Begin ###############################
 RUN apt-get update && apt install -y \
     libgl1-mesa-dev libsoundio-dev libvulkan-dev libx11-dev libxcursor-dev libxinerama-dev libxrandr-dev libusb-1.0-0-dev libssl-dev libudev-dev mesa-common-dev uuid-dev
 
@@ -167,9 +170,9 @@ RUN mkdir -p /etc/udev/rules.d/ && \
 
 RUN rm -rf /home/${USER}/work/azure/Azure-Kinect-Sensor-SDK
 
-#################### Kinect Azure ###############################
+#################### Kinect Azure End ###############################
 
-############################## USER CONFIG ####################################
+############################## USER CONFIG Begin ####################################
 
 # * Switch user to ${USER}
 USER ${USER}
@@ -191,21 +194,49 @@ RUN echo "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" >> ~/.bashrc
 RUN mkdir -p /home/"${USER}"/work
 WORKDIR /home/"${USER}"/work
 
-# COPY lerobot_pyproject.toml .
-# COPY gr00t_pyproject.toml .
 
-#lerobot env
-# RUN git clone https://github.com/huggingface/lerobot.git && \
-#     cd lerobot && \
-#     pip3 install -e .
-# COPY ../ur5e_data_collect_ws/Isaac-GR00T/ /home/"${USER}"/work/Isaac-GR00T/
+############################## Install GR00T Begin ####################################
+# * Install Miniconda
+RUN mkdir -p ~/miniconda3 \
+    && wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh \
+    && bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3 \
+    && rm ~/miniconda3/miniconda.sh \
+    && ~/miniconda3/bin/conda init bash \
+    && ~/miniconda3/bin/conda config --set auto_activate_base false
+
+# After miniconda install, make conda available
+ENV PATH="${PATH}:/home/${USER}/miniconda3/bin"
+
+# Accept Conda Terms of Service for non-interactive use
+RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+
+# Create and set up the gr00t environment
+RUN conda create -n gr00t_n1.5 python=3.10 -y
+
+RUN mkdir -p /home/${USER}/miniconda3/envs/gr00t_n1.5/etc/conda/activate.d && \
+    echo 'export PYTHONNOUSERSITE=1' > /home/${USER}/miniconda3/envs/gr00t_n1.5/etc/conda/activate.d/no_user_site.sh && \
+    mkdir -p /home/${USER}/miniconda3/envs/gr00t_n1.5/etc/conda/deactivate.d && \
+    echo 'unset PYTHONNOUSERSITE' > /home/${USER}/miniconda3/envs/gr00t_n1.5/etc/conda/deactivate.d/no_user_site.sh
+
+
+RUN conda run -n gr00t_n1.5 pip install --upgrade setuptools
+
 WORKDIR /home/"${USER}"/work/pkgs
-# RUN git clone https://github.com/NVIDIA/Isaac-GR00T && \
-#     cd Isaac-GR00T && \
-#     pip3 install -e .[base]
-RUN pip3 install torch==2.7.0 torchvision==0.22.0 --index-url https://download.pytorch.org/whl/cu128
-RUN pip3 install --no-build-isolation flash-attn==2.8.3
+RUN git clone -b n1.5-release https://github.com/NVIDIA/Isaac-GR00T && \
+    cd Isaac-GR00T && \
+    conda run -n gr00t_n1.5 pip install -e ".[base]" && \
+    # conda run -n gr00t_n1.5 pip install --no-build-isolation flash-attn==2.7.1.post4 && \
+    conda run -n gr00t_n1.5 pip install torch==2.7.0 torchvision==0.22.0 --index-url https://download.pytorch.org/whl/cu128 && \
+    conda run -n gr00t_n1.5 pip install --no-build-isolation flash-attn==2.8.3
 
+############################## Install GR00T End  ####################################
+
+############################## Install LeRobot Begin ####################################
+
+#RUN pip3 install torch==2.7.0 torchvision==0.22.0 --index-url https://download.pytorch.org/whl/cu128
+#RUN pip3 install --no-build-isolation flash-attn==2.8.3
+RUN pip3 install psutil
 
 RUN sudo apt update && sudo apt install unzip
 RUN  wget https://github.com/huggingface/lerobot/archive/refs/tags/v0.3.3.zip -O lerobot.zip \
@@ -218,6 +249,8 @@ RUN cd lerobot && \
     pip3 install -e .
 
 #RUN echo "export PYTHONPATH="/home/${USER}/work/pkgs/lerobot:${PYTHONPATH}"" >> ~/.bashrc
+
+############################## Install GR00T End ####################################
 
 WORKDIR /home/"${USER}"/work
 

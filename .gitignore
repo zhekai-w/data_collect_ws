@@ -2,5 +2,7 @@ build/
 install/
 log/
 dataset/
-dataset_ref_image/
-dataset_ref_video/
+eval/
+pkgs/gr00t_finetuned/
+.vscode/
+.claude/

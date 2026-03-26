@@ -19,3 +19,8 @@
 [submodule "pkgs/lerobot"]
 	path = pkgs/lerobot
 	url = https://github.com/huggingface/lerobot.git
+	
+[submodule "pkgs/Isaac-GR00T"]
+	path = pkgs/Isaac-GR00T
+	url = https://github.com/NVIDIA/Isaac-GR00T.git
+	branch = n1.5-release

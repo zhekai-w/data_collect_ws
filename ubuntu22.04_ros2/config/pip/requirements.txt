@@ -9,6 +9,7 @@ pyk4a
 
 #tf
 numpy-quaternion
+scipy==1.15.3
 # install some pip packages needed for testing
 # argcomplete
 # flake8-blind-except

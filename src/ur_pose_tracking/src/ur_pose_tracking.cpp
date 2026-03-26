@@ -138,7 +138,7 @@ int main(int argc, char** argv)
   planning_scene_monitor->startPublishingPlanningScene(planning_scene_monitor::PlanningSceneMonitor::UPDATE_SCENE);
 
   // Wait for Planning Scene Monitor to setup
-  if (!planning_scene_monitor->waitForCurrentRobotState(node->now(), 5.0 /* seconds */))
+  if (!planning_scene_monitor->waitForCurrentRobotState(node->now(), 30.0 /* seconds */))
   {
     RCLCPP_ERROR_STREAM(LOGGER, "Error waiting for current robot state in PlanningSceneMonitor.");
     executor.cancel();

@@ -11,7 +11,7 @@ docker build -t "${DOCKER_HUB_USER}"/"lerobot_data_collect" \
     --build-arg GID="${gid}" \
     --build-arg HARDWARE="${hardware}" \
     --build-arg ENTRYPOINT_FILE="${ENTRYPOINT_FILE}" \
-    -f "${FILE_DIR}"/"Dockerfile_lerobot" "${FILE_DIR}"
+    -f "${FILE_DIR}"/"lerobot.Dockerfile" "${FILE_DIR}"
 
 #     --progress=plain \
 #     --no-cache \

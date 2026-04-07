@@ -2,6 +2,8 @@ build/
 install/
 log/
 dataset/
+All_Datasets/
+Old_Datasets/
 eval/
 pkgs/gr00t_finetuned/
 .vscode/

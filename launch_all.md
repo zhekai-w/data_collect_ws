@@ -33,8 +33,28 @@ ros2 run ur5_lerobot_data_collection data_collect --ros-args -p task:="place the
   0.000  0.000  0.000  1.000
 
 ### GR00T fine-tuning
+#### Write your datasets as list in bash before running training script
 ```
-
+dataset_list=(
+    "$HOME/zack_ws/lerobot_datasets/All_Datasets/dataset_large_to_green"
+    "$HOME/zack_ws/lerobot_datasets/All_Datasets/dataset_large_to_orange"
+    "$HOME/zack_ws/lerobot_datasets/All_Datasets/dataset_large_to_red"
+    "$HOME/zack_ws/lerobot_datasets/All_Datasets/dataset_medium_to_green"
+    "$HOME/zack_ws/lerobot_datasets/All_Datasets/dataset_medium_to_orange"
+    "$HOME/zack_ws/lerobot_datasets/All_Datasets/dataset_medium_to_red"
+    "$HOME/zack_ws/lerobot_datasets/All_Datasets/dataset_small_to_green"
+    "$HOME/zack_ws/lerobot_datasets/All_Datasets/dataset_small_to_orange"
+    "$HOME/zack_ws/lerobot_datasets/All_Datasets/dataset_small_to_red"
+)
+```
+#### Then run training script
+```
+python3 scripts/gr00t_finetune.py \
+    --dataset-path ${dataset_list[@]} \
+    --max_steps=30000 \
+    --lora-rank=16 \
+    --gradient_accumulation_steps=4 \
+    --data-config="ur5_2f85_arm_gripper" 
 ```
 
 ### GR00T server
@@ -48,12 +68,13 @@ PYTHONNOUSERSITE=1 python scripts/inference_service.py --server \
 ### GR00T eval with dataset
 ```
 python scripts/eval_policy.py --plot \
-  --model-path /home/zhekai/work/pkgs/gr00t_finetuned/gr00t_32x4batch_30ksteps \
-  --dataset-path  /home/zhekai/work/dataset \
+  --model-path $HOME/work/pkgs/gr00t_finetuned/gr00t_32x4batch_30ksteps \
+  --dataset-path  $HOME/work/dataset \
   --embodiment-tag new_embodiment \
   --data-config ur5_2f85_arm_gripper \
   --modality-keys ur5_arm gripper \
-  --start_traj=45 --steps=300 \
+  --start_traj=45 --steps=300 --filter \
+  --video-backend decord \
   --denoising-steps=8 \
   --action_horizon=4 \
 ```
@@ -70,12 +91,13 @@ ros2 launch robotiq_description robotiq_control.launch.py
 ```
 #### Run eval script
 ```
-python scripts/eval_policy_hardware.py --model-path /home/zhekai/work/pkgs/gr00t_finetuned/gr00t_32x4batch_30ksteps \
-  --dataset-path  /home/zhekai/work/dataset \
+python scripts/eval_policy_hardware.py \
+  --model-path $HOME/work/pkgs/gr00t_finetuned/gr00t_32x4batch_30ksteps \
+  --dataset-path  $HOME/work/dataset \
   --embodiment-tag new_embodiment \
   --data-config ur5_2f85_arm_gripper \
   --modality-keys ur5_arm gripper \
-  --start_traj=45 --steps=300 \
+  --start_traj=45 --steps=300 --filter --send-mode chunk \
   --denoising-steps=8 \
   --action_horizon=4 \
   --dt=0.033 

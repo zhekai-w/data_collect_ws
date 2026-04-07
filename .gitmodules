@@ -8,7 +8,7 @@
 
 [submodule "src/ros2_robotiq_gripper"]
 	path = src/ros2_robotiq_gripper
-	url = https://github.com/PickNikRobotics/ros2_robotiq_gripper.git
+	url = https://github.com/zhekai-w/ros2_robotiq_gripper.git
 	branch = humble
 
 [submodule "src/serial"]
@@ -18,9 +18,10 @@
 
 [submodule "pkgs/lerobot"]
 	path = pkgs/lerobot
-	url = https://github.com/huggingface/lerobot.git
+	url = https://github.com/zhekai-w/lerobot.git
+	branch = my-v0.3.3
 	
 [submodule "pkgs/Isaac-GR00T"]
 	path = pkgs/Isaac-GR00T
-	url = https://github.com/NVIDIA/Isaac-GR00T.git
-	branch = n1.5-release
+	url = https://github.com/zhekai-w/Isaac-GR00T.git
+	branch = my-n1.5-release

@@ -1,10 +1,13 @@
 ## launch all
 ### ur5 controller 
 ```
+rosdep install --from-paths src --ignore-src -r -y
+
 ros2 launch dualsense_teleop ur5_pose_tracking.launch.py
 ```
 ### gripper controller
 ```
+sudo chmod 777 /dev/ttyUSB0 
 ros2 launch robotiq_description robotiq_control.launch.py
 ```
 
@@ -18,7 +21,13 @@ ros2 launch dualsense_teleop dualsense_teleop.launch.py
 
 ### LeRobot data collection 
 ```
-ros2 run ur5_lerobot_data_collection data_collect --ros-args -p task:="place the small cube on the red box."
+ros2 run ur5_lerobot_data_collection data_collect --ros-args -p task:="place the cube on the green box."
+```
+
+### Replay collected data
+```
+ros2 run ur5_lerobot_data_collection data_replay \
+  --dataset ./All_Datasets/dataset_small_to_orange --episode 0 --speed 0.5 --mode trajectory
 ```
 
 ### UR5 arm home pose
@@ -52,6 +61,7 @@ dataset_list=(
 python3 scripts/gr00t_finetune.py \
     --dataset-path ${dataset_list[@]} \
     --max_steps=30000 \
+    --save_steps=10000 \
     --lora-rank=16 \
     --gradient_accumulation_steps=4 \
     --data-config="ur5_2f85_arm_gripper" 
@@ -60,7 +70,7 @@ python3 scripts/gr00t_finetune.py \
 ### GR00T server
 ```
 PYTHONNOUSERSITE=1 python scripts/inference_service.py --server \
-  --model-path /home/zhekai/work/pkgs/gr00t_finetuned/gr00t_32x4batch_30ksteps \
+  --model-path /home/zhekai/work/Models/gr00t_finetuned/gr00t_32x4batch_30ksteps \
   --embodiment-tag new_embodiment \
   --data-config ur5_2f85_arm_gripper
 ```
@@ -68,22 +78,23 @@ PYTHONNOUSERSITE=1 python scripts/inference_service.py --server \
 ### GR00T eval with dataset
 ```
 python scripts/eval_policy.py --plot \
-  --model-path $HOME/work/pkgs/gr00t_finetuned/gr00t_32x4batch_30ksteps \
-  --dataset-path  $HOME/work/dataset \
+  --model-path $HOME/work/Models/gr00t_finetuned/gr00t_64x9D_32B_30kS_reordered/checkpoint-10000 \
+  --dataset-path $HOME/work/All_Datasets/test_datasets_reordered \
   --embodiment-tag new_embodiment \
   --data-config ur5_2f85_arm_gripper \
   --modality-keys ur5_arm gripper \
-  --start_traj=45 --steps=300 --filter \
+  --start_traj=1 --steps=120 \
   --video-backend decord \
   --denoising-steps=8 \
-  --action_horizon=4 \
+  --action_horizon=16 --filter 
 ```
 
 ### GR00T eval on hardware with dataset
 #### Launch ur5 robot driver
 ```
 ros2 launch ur_robot_driver ur_control.launch.py ur_type:=ur5 robot_ip:=192.168.1.100 \
-initial_joint_contoller:=forward_position_controller 
+initial_joint_controller:=passthrough_trajectory_controller
+initial_joint_controller:=forward_position_controller 
 ```
 #### Launch gripper controller 
 ```
@@ -92,20 +103,23 @@ ros2 launch robotiq_description robotiq_control.launch.py
 #### Run eval script
 ```
 python scripts/eval_policy_hardware.py \
-  --model-path $HOME/work/pkgs/gr00t_finetuned/gr00t_32x4batch_30ksteps \
-  --dataset-path  $HOME/work/dataset \
+  --model-path $HOME/work/Models/gr00t_finetuned/gr00t_64x9D_32x4B_30kS \
+  --dataset-path $HOME/work/All_Datasets/test_datasets \
   --embodiment-tag new_embodiment \
   --data-config ur5_2f85_arm_gripper \
   --modality-keys ur5_arm gripper \
-  --start_traj=45 --steps=300 --filter --send-mode chunk \
+  --start_traj=1 --steps=300 --filter --send-mode single \
   --denoising-steps=8 \
-  --action_horizon=4 \
-  --dt=0.033 
+  --action_horizon=16 \
+  --dt=0.3
 ```
 
 ### GR00T inference
 #### run inferece server
 ```
+python scripts/inference_service.py --model-path $HOME/work/Models/gr00t_finetuned/gr00t_64x9D_32x4B_30kS --server \
+--data-config ur5_2f85_arm_gripper \
+--embodiment-tag new_embodiment 
 
 ```
 
@@ -116,6 +130,25 @@ python scripts/eval_policy_hardware.py \
 ros2 launch ur_robot_driver ur_control.launch.py ur_type:=ur5 robot_ip:=192.168.1.100 \
 initial_joint_contoller:=scaled_joint_trajectory_contoller 
 ```
+#### Launch gripper controller 
+```
+ros2 launch robotiq_description robotiq_control.launch.py
+```
+#### Run inference client
+```
+python scripts/ur5_gr00t_simple_client.py --send-mode chunk --lang "place the small cube on the red box." 
+```
 
+#### Replay collected data
+```
+python data_replay.py --dataset-path /home/zack/work/All_Datasets/dataset_small_to_orange --controller passthrough \
+--send-mode single
+```
 
+#### Visualize attention head
+```
+python scripts/visualize_text_image_cross_attention.py --image_path ./scripts/images/Balls.jpg --text_query "white ball" --head 5 --layers 16
+
+python scripts/visualize_text_image_cross_attention.py --image_path ~/work/All_Datasets/30hz/large_to_red_encoded/videos/chunk-000/observation.images.cam1/episode_000003.mp4 --text_query "cube" --frame_stride 5 --head 11
+```
 

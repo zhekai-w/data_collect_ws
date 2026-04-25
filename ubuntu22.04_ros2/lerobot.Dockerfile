@@ -223,7 +223,7 @@ RUN mkdir -p /home/${USER}/miniconda3/envs/gr00t_n1.5/etc/conda/activate.d && \
 RUN conda run -n gr00t_n1.5 pip install --upgrade setuptools
 
 WORKDIR /home/"${USER}"/work/pkgs
-RUN git clone -b n1.5-release https://github.com/NVIDIA/Isaac-GR00T && \
+RUN git clone -b my-n1.5-release https://github.com/zhekai-w/Isaac-GR00T && \
     cd Isaac-GR00T && \
     conda run -n gr00t_n1.5 pip install -e ".[base]" && \
     # conda run -n gr00t_n1.5 pip install --no-build-isolation flash-attn==2.7.1.post4 && \
@@ -239,12 +239,12 @@ RUN git clone -b n1.5-release https://github.com/NVIDIA/Isaac-GR00T && \
 RUN pip3 install psutil
 
 RUN sudo apt update && sudo apt install unzip
-RUN  wget https://github.com/huggingface/lerobot/archive/refs/tags/v0.3.3.zip -O lerobot.zip \
-    && unzip lerobot.zip \
-    && rm lerobot.zip \
-    # Rename the extracted folder (it’s usually like yourrepo-1.2.3)
-    && mv lerobot-0.3.3/ lerobot
-
+# RUN  wget https://github.com/huggingface/lerobot/archive/refs/tags/v0.3.3.zip -O lerobot.zip \
+#     && unzip lerobot.zip \
+#     && rm lerobot.zip \
+#     # Rename the extracted folder (it’s usually like yourrepo-1.2.3)
+#     && mv lerobot-0.3.3/ lerobot
+RUN git clone -b my-v0.3.3 https://github.com/zhekai-w/lerobot.git
 RUN cd lerobot && \
     pip3 install -e .
 

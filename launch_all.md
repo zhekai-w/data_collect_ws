@@ -21,7 +21,7 @@ ros2 launch dualsense_teleop dualsense_teleop.launch.py
 
 ### LeRobot data collection 
 ```
-ros2 run ur5_lerobot_data_collection data_collect --ros-args -p task:="place the cube on the green box."
+ros2 run ur5_lerobot_data_collection data_collect --ros-args -p task:="place apple in the white plate."
 ```
 
 ### Replay collected data
@@ -67,19 +67,11 @@ python3 scripts/gr00t_finetune.py \
     --data-config="ur5_2f85_arm_gripper" 
 ```
 
-### GR00T server
-```
-PYTHONNOUSERSITE=1 python scripts/inference_service.py --server \
-  --model-path /home/zhekai/work/Models/gr00t_finetuned/gr00t_32x4batch_30ksteps \
-  --embodiment-tag new_embodiment \
-  --data-config ur5_2f85_arm_gripper
-```
-
 ### GR00T eval with dataset
 ```
 python scripts/eval_policy.py --plot \
-  --model-path $HOME/work/Models/gr00t_finetuned/gr00t_64x9D_32B_30kS_reordered/checkpoint-10000 \
-  --dataset-path $HOME/work/All_Datasets/test_datasets_reordered \
+  --model-path $HOME/work/Models/gr00t_finetuned/gr00t_mediumD_32B_30Hz \
+  --dataset-path $HOME/work/All_Datasets/test_just_medium \
   --embodiment-tag new_embodiment \
   --data-config ur5_2f85_arm_gripper \
   --modality-keys ur5_arm gripper \
@@ -117,7 +109,7 @@ python scripts/eval_policy_hardware.py \
 ### GR00T inference
 #### run inferece server
 ```
-python scripts/inference_service.py --model-path $HOME/work/Models/gr00t_finetuned/gr00t_64x9D_32x4B_30kS --server \
+python scripts/inference_service.py --model-path $HOME/work/Models/gr00t_finetuned/gr00t_mediumD_32B_30Hz --server \
 --data-config ur5_2f85_arm_gripper \
 --embodiment-tag new_embodiment 
 
@@ -136,7 +128,7 @@ ros2 launch robotiq_description robotiq_control.launch.py
 ```
 #### Run inference client
 ```
-python scripts/ur5_gr00t_simple_client.py --send-mode chunk --lang "place the small cube on the red box." 
+python scripts/ur5_gr00t_simple_client.py --send-mode chunk --lang "place the cube on the red box." 
 ```
 
 #### Replay collected data
@@ -152,3 +144,17 @@ python scripts/visualize_text_image_cross_attention.py --image_path ./scripts/im
 python scripts/visualize_text_image_cross_attention.py --image_path ~/work/All_Datasets/30hz/large_to_red_encoded/videos/chunk-000/observation.images.cam1/episode_000003.mp4 --text_query "cube" --frame_stride 5 --head 11
 ```
 
+### Fine-tuning smolVLA script
+```
+python3 lerobot/scripts/train.py \
+  --policy.path=lerobot/smolvla_base \
+  --dataset.repo_id=ur5_combined \
+  --dataset.root=/home/toastoast/zack_ws/lerobot_datasets/30hz/reordered_combined_nodepth \
+  --batch_size=64 \
+  --steps=100000 \
+  --save_freq=10000 \
+  --policy.push_to_hub=false \
+  --wandb.enable=true \
+  --output_dir=/home/toastoast/zack_ws/models/smolvla_ur5 \
+  --num_workers=8
+```

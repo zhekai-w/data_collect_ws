@@ -70,8 +70,8 @@ python3 scripts/gr00t_finetune.py \
 ### GR00T eval with dataset
 ```
 python scripts/eval_policy.py --plot \
-  --model-path $HOME/work/Models/gr00t_finetuned/gr00t_mediumD_32B_30Hz \
-  --dataset-path $HOME/work/All_Datasets/test_just_medium \
+  --model-path $HOME/work/Models/gr00t_finetuned/gr00t_64x9D_E128B_fruit_wfov \
+  --dataset-path $HOME/work/all_datasets/1_std_datasets/test_fruit_encoded \
   --embodiment-tag new_embodiment \
   --data-config ur5_2f85_arm_gripper \
   --modality-keys ur5_arm gripper \
@@ -79,6 +79,16 @@ python scripts/eval_policy.py --plot \
   --video-backend decord \
   --denoising-steps=8 \
   --action_horizon=16 --filter 
+
+# Visualize savgol smoothed vs raw
+python eval_policy.py --plot --chunk-filter savgol
+
+# Visualize with boundary blend
+python eval_policy.py --plot --chunk-filter savgol --boundary-blend
+
+# Visualize RTS Kalman smoother
+python eval_policy.py --plot --chunk-filter rts --boundary-blend
+
 ```
 
 ### GR00T eval on hardware with dataset
@@ -95,8 +105,8 @@ ros2 launch robotiq_description robotiq_control.launch.py
 #### Run eval script
 ```
 python scripts/eval_policy_hardware.py \
-  --model-path $HOME/work/Models/gr00t_finetuned/gr00t_64x9D_32x4B_30kS \
-  --dataset-path $HOME/work/All_Datasets/test_datasets \
+  --model-path $HOME/work/Models/gr00t_finetuned/gr00t_64x9D_E128B_fruit \
+  --dataset-path $HOME/work/all_datasets/1_std_datasets/apple_to_basket_encoded \
   --embodiment-tag new_embodiment \
   --data-config ur5_2f85_arm_gripper \
   --modality-keys ur5_arm gripper \
@@ -109,7 +119,7 @@ python scripts/eval_policy_hardware.py \
 ### GR00T inference
 #### run inferece server
 ```
-python scripts/inference_service.py --model-path $HOME/work/Models/gr00t_finetuned/gr00t_mediumD_32B_30Hz --server \
+python scripts/inference_service.py --model-path $HOME/work/Models/gr00t_finetuned/gr00t_64x9D_E128B_fruit --server \
 --data-config ur5_2f85_arm_gripper \
 --embodiment-tag new_embodiment 
 
@@ -128,7 +138,17 @@ ros2 launch robotiq_description robotiq_control.launch.py
 ```
 #### Run inference client
 ```
-python scripts/ur5_gr00t_simple_client.py --send-mode chunk --lang "place the cube on the red box." 
+python scripts/ur5_gr00t_simple_client.py --send-mode chunk --lang "place apple in the basket." 
+
+# Start here — fixes chunk-boundary jerk only
+python scripts/ur5_gr00t_simple_client.py --send-mode chunk --lang "place apple in the basket." --boundary-blend
+
+# Add within-chunk smoothing
+python scripts/ur5_gr00t_simple_client.py --send-mode chunk --lang "place apple in the basket." --chunk-filter savgol --boundary-blend
+
+# Most smoothing (Kalman)
+python scripts/ur5_gr00t_simple_client.py --send-mode chunk --lang "place apple in the basket." --chunk-filter rts --boundary-blend
+
 ```
 
 #### Replay collected data
@@ -157,4 +177,22 @@ python3 lerobot/scripts/train.py \
   --wandb.enable=true \
   --output_dir=/home/toastoast/zack_ws/models/smolvla_ur5 \
   --num_workers=8
+```
+
+### SmolVLA eval
+```
+python3 ./src/lerobot/scripts/eval_lerobot_policies.py \
+    --policy_path /home/zack/work/Models/smolvla_ur5/checkpoints/100000/pretrained_model \
+    --dataset_root /home/zack/work/all_datasets/30hz_reordered/combined_nodepth \
+    --episodes 0 1 2 \
+    --save_plot_path eval_results/
+```
+
+### SmolVLA inference
+```
+python3 src/lerobot/scripts/server/smolvla_inference_service.py \
+--server --model-path /home/zack/work/Models/smolvla_ur5/checkpoints/100000/pretrained_model --port 5555
+
+
+python scripts/ur5_gr00t_simple_client.py --send-mode chunk --lang "place apple in the basket." 
 ```

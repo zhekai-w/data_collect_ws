@@ -77,7 +77,7 @@ RUN apt update \
     openssh-server \
     ffmpeg \
     libsm6 \
-    libxext6 \ 
+    libxext6 \
     snapd \
     # * Work tools
     && apt clean \
@@ -228,7 +228,8 @@ RUN git clone -b my-n1.5-release https://github.com/zhekai-w/Isaac-GR00T && \
     conda run -n gr00t_n1.5 pip install -e ".[base]" && \
     # conda run -n gr00t_n1.5 pip install --no-build-isolation flash-attn==2.7.1.post4 && \
     conda run -n gr00t_n1.5 pip install torch==2.7.0 torchvision==0.22.0 torchcodec==0.5 --index-url https://download.pytorch.org/whl/cu128 && \
-    conda run -n gr00t_n1.5 pip install --no-build-isolation flash-attn==2.8.3
+    conda run -n gr00t_n1.5 pip install --no-build-isolation flash-attn==2.8.3 && \
+    conda run -n gr00t_n1.5 pip install pyk4a pyrealsense2
 
 ############################## Install GR00T End  ####################################
 
@@ -244,9 +245,15 @@ RUN sudo apt update && sudo apt install unzip
 #     && rm lerobot.zip \
 #     # Rename the extracted folder (it’s usually like yourrepo-1.2.3)
 #     && mv lerobot-0.3.3/ lerobot
+RUN conda create -n lerobot python=3.10 -y
 RUN git clone -b my-v0.3.3 https://github.com/zhekai-w/lerobot.git
 RUN cd lerobot && \
-    pip3 install -e .
+    conda run -n lerobot pip3 install -e ".[all]" && \
+# TODO: install torch cuda12.8 like gr00t_n1.5 does
+    conda run -n lerobot pip3 install torch==2.7.0 torchvision==0.22.0 torchcodec==0.5 --index-url https://download.pytorch.org/whl/cu128 && \
+    conda run -n lerobot pip3 install --no-build-isolation flash-attn==2.8.3 && \
+    conda run -n lerobot pip3 install pyk4a pyrealsense2
+
 
 #RUN echo "export PYTHONPATH="/home/${USER}/work/pkgs/lerobot:${PYTHONPATH}"" >> ~/.bashrc
 

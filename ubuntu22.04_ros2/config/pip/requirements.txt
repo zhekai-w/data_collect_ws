@@ -4,6 +4,7 @@ dualsense-controller
 opencv-contrib-python==4.11.0.86
 scipy==1.15.3
 #ultralytics
+python-lsp-server[all
 
 # Azure Kinect DK
 pyk4a

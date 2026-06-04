@@ -179,6 +179,7 @@ USER ${USER}
 WORKDIR /
 RUN curl -fsSL https://opencode.ai/install | bash
 RUN curl -fsSL https://claude.ai/install.sh | bash
+RUN curl -fsSL https://antigravity.google/cli/install.sh | bash
 RUN echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 
 RUN ./config/shell/bash_setup.sh "${USER}" "${GROUP}" \
@@ -246,13 +247,20 @@ RUN sudo apt update && sudo apt install unzip
 #     # Rename the extracted folder (it’s usually like yourrepo-1.2.3)
 #     && mv lerobot-0.3.3/ lerobot
 RUN conda create -n lerobot python=3.10 -y
+RUN mkdir -p /home/${USER}/miniconda3/envs/lerobot/etc/conda/activate.d && \
+    echo 'export PYTHONNOUSERSITE=1' > /home/${USER}/miniconda3/envs/lerobot/etc/conda/activate.d/no_user_site.sh && \
+    mkdir -p /home/${USER}/miniconda3/envs/lerobot/etc/conda/deactivate.d && \
+    echo 'unset PYTHONNOUSERSITE' > /home/${USER}/miniconda3/envs/lerobot/etc/conda/deactivate.d/no_user_site.sh
+
+RUN conda run -n lerobot pip install --upgrade setuptools
+
 RUN git clone -b my-v0.3.3 https://github.com/zhekai-w/lerobot.git
 RUN cd lerobot && \
-    conda run -n lerobot pip3 install -e ".[all]" && \
+    conda run -n lerobot pip install -e ".[all]" && \
 # TODO: install torch cuda12.8 like gr00t_n1.5 does
-    conda run -n lerobot pip3 install torch==2.7.0 torchvision==0.22.0 torchcodec==0.5 --index-url https://download.pytorch.org/whl/cu128 && \
-    conda run -n lerobot pip3 install --no-build-isolation flash-attn==2.8.3 && \
-    conda run -n lerobot pip3 install pyk4a pyrealsense2
+    conda run -n lerobot pip install torch==2.7.0 torchvision==0.22.0 torchcodec==0.5 --index-url https://download.pytorch.org/whl/cu128 && \
+    conda run -n lerobot pip install --no-build-isolation flash-attn==2.8.3 && \
+    conda run -n lerobot pip install pyk4a pyrealsense2
 
 
 #RUN echo "export PYTHONPATH="/home/${USER}/work/pkgs/lerobot:${PYTHONPATH}"" >> ~/.bashrc

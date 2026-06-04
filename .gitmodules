@@ -20,8 +20,11 @@
 	path = pkgs/lerobot
 	url = https://github.com/zhekai-w/lerobot.git
 	branch = my-v0.3.3
-	
+
 [submodule "pkgs/Isaac-GR00T"]
 	path = pkgs/Isaac-GR00T
 	url = https://github.com/zhekai-w/Isaac-GR00T.git
 	branch = my-n1.5-release
+[submodule "pkgs/openpi"]
+	path = pkgs/openpi
+	url = https://github.com/zhekai-w/openpi.git

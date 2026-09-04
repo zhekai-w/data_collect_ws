@@ -3,8 +3,12 @@ install/
 log/
 dataset/
 All_Datasets/
+all_datasets/
 Old_Datasets/
 eval/
+models/
 pkgs/gr00t_finetuned/
 .vscode/
 .claude/
+.zed/
+videos/

@@ -263,6 +263,13 @@ RUN cd lerobot && \
     conda run -n lerobot pip install pyk4a pyrealsense2
 
 
+RUN conda create -n openpi python=3.11 -y
+RUN git clone --recurse-submodules https://github.com/zhekai-w/openpi.git && \
+    conda run -n openpi pip install uv && \
+    cd openpi && \
+    conda run -n openpi GIT_LFS_SKIP_SMUDGE=1 uv sync && \
+    conda run -n openpi uv pip install -e .
+
 #RUN echo "export PYTHONPATH="/home/${USER}/work/pkgs/lerobot:${PYTHONPATH}"" >> ~/.bashrc
 
 ############################## Install GR00T End ####################################
@@ -278,7 +285,7 @@ RUN ./config/pip/pip_setup.sh
 
 
 # * Make SSH available
-EXPOSE 22
+EXPOSE 2222
 
 ENTRYPOINT [ "/entrypoint.sh", "terminator" ]
 # ENTRYPOINT [ "/entrypoint.sh", "tmux" ]

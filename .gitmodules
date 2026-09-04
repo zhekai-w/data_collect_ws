@@ -25,6 +25,11 @@
 	path = pkgs/Isaac-GR00T
 	url = https://github.com/zhekai-w/Isaac-GR00T.git
 	branch = my-n1.5-release
+
 [submodule "pkgs/openpi"]
 	path = pkgs/openpi
 	url = https://github.com/zhekai-w/openpi.git
+[submodule "src/Universal_Robots_ROS2_Driver"]
+	path = src/Universal_Robots_ROS2_Driver
+	url = https://github.com/zhekai-w/Universal_Robots_ROS2_Driver.git
+	branch = my-humble
